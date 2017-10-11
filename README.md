@@ -5,10 +5,3 @@
 * 模仿okHttp结构，采用基本和okHttp相同的api
 * 底层是HttpURLConnection,io操作为okIo
 
-
-```sequence
-title:VinciHttpClient
-
-participant:Call
-participant:Request
-```
