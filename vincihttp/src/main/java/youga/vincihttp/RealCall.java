@@ -9,6 +9,7 @@ import youga.vincihttp.internal.connection.ConnectInterceptor;
 import youga.vincihttp.internal.http.BridgeInterceptor;
 import youga.vincihttp.internal.http.CallServerInterceptor;
 import youga.vincihttp.internal.http.RealInterceptorChain;
+import youga.vincihttp.internal.http.RetryAndFollowUpInterceptor;
 
 /**
  * @author YougaKingWu
@@ -23,18 +24,22 @@ public class RealCall implements Call {
     private final Request mOriginalRequest;
     private EventListener mEventListener;
     private boolean mExecuted;
+    private final RetryAndFollowUpInterceptor mRetryAndFollowUpInterceptor;
 
     static RealCall newRealCall(VinciHttpClient client, Request originalRequest) {
-        // Safely publish the Call instance to the EventListener.
-        RealCall call = new RealCall(client, originalRequest);
-        call.mEventListener = client.eventListenerFactory().create(call);
-        return call;
+        return new RealCall(client, originalRequest);
     }
 
 
     public RealCall(VinciHttpClient client, Request originalRequest) {
+
+        final EventListener.Factory eventListenerFactory = client.eventListenerFactory();
+
         mClient = client;
         mOriginalRequest = originalRequest;
+        mRetryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(mClient);
+
+        mEventListener = eventListenerFactory.create(this);
     }
 
     @Override
@@ -117,15 +122,16 @@ public class RealCall implements Call {
 
     private Response getResponseWithInterceptorChain() throws IOException {
         List<Interceptor> interceptors = new ArrayList<>();
+
         interceptors.addAll(mClient.interceptors());
+        interceptors.add(mRetryAndFollowUpInterceptor);
         interceptors.add(new BridgeInterceptor());
-        interceptors.add(new ConnectInterceptor());
+        interceptors.add(new ConnectInterceptor(mClient));
         interceptors.add(new CallServerInterceptor());
 
 
-        Interceptor.Chain chain = new RealInterceptorChain(interceptors, 0, null,
-                mOriginalRequest, this, mEventListener, mClient.connectTimeoutMillis(),
-                mClient.readTimeoutMillis(), mClient.writeTimeoutMillis());
+        Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null,
+                null, 0, mOriginalRequest);
 
         return chain.proceed(mOriginalRequest);
     }

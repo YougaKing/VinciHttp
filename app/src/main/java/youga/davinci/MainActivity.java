@@ -6,11 +6,11 @@ import android.util.Log;
 
 import java.io.IOException;
 
-import youga.vincihttp.Call;
-import youga.vincihttp.Callback;
-import youga.vincihttp.Request;
-import youga.vincihttp.Response;
-import youga.vincihttp.VinciHttpClient;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        VinciHttpClient client = new VinciHttpClient.Builder()
+        OkHttpClient client = new OkHttpClient.Builder()
                 .build();
 
         final Request request = new Request.Builder()

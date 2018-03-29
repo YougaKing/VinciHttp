@@ -1,14 +1,14 @@
 package youga.vincihttp.internal.http;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.List;
 
-import youga.vincihttp.Call;
-import youga.vincihttp.EventListener;
+import youga.vincihttp.Connection;
 import youga.vincihttp.Interceptor;
 import youga.vincihttp.Request;
 import youga.vincihttp.Response;
+import youga.vincihttp.internal.connection.RealConnection;
+import youga.vincihttp.internal.connection.StreamAllocation;
 
 /**
  * @author YougaKingWu
@@ -19,27 +19,20 @@ import youga.vincihttp.Response;
 public class RealInterceptorChain implements Interceptor.Chain {
 
     private final List<Interceptor> mInterceptors;
-    private final Request mRequest;
-    private final Call mCall;
-    private final EventListener mEventListener;
-    private final int mConnectTimeout;
-    private final int mReadTimeout;
-    private final int mWriteTimeout;
+    private final StreamAllocation mStreamAllocation;
+    private final HttpCodec mHttpCodec;
+    private final RealConnection mConnection;
     private final int mIndex;
-    private final HttpURLConnection mConnection;
+    private final Request mRequest;
 
-    public RealInterceptorChain(List<Interceptor> interceptors, int index, HttpURLConnection connection,
-                                Request request, Call call,
-                                EventListener eventListener, int connectTimeout, int readTimeout, int writeTimeout) {
+    public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
+                                HttpCodec httpCodec, RealConnection connection, int index, Request request) {
         mInterceptors = interceptors;
-        mIndex = index;
+        mStreamAllocation = streamAllocation;
+        mHttpCodec = httpCodec;
         mConnection = connection;
+        mIndex = index;
         mRequest = request;
-        mCall = call;
-        mEventListener = eventListener;
-        mConnectTimeout = connectTimeout;
-        mReadTimeout = readTimeout;
-        mWriteTimeout = writeTimeout;
     }
 
     @Override
@@ -47,19 +40,31 @@ public class RealInterceptorChain implements Interceptor.Chain {
         return mRequest;
     }
 
-    @Override
-    public Response proceed(Request request) throws IOException {
-        return proceed(request, mConnection);
+    public StreamAllocation streamAllocation() {
+        return mStreamAllocation;
     }
 
-    public Response proceed(Request request, HttpURLConnection connection) throws IOException {
+    public HttpCodec httpStream() {
+        return mHttpCodec;
+    }
+
+    public Connection connection() {
+        return mConnection;
+    }
+
+    @Override
+    public Response proceed(Request request) throws IOException {
+        return proceed(request, mStreamAllocation, mHttpCodec, mConnection);
+    }
+
+    public Response proceed(Request request, StreamAllocation streamAllocation, HttpCodec httpCodec,
+                            RealConnection connection) throws IOException {
 
         if (mIndex >= mInterceptors.size()) throw new AssertionError();
 
 
-        RealInterceptorChain next = new RealInterceptorChain(mInterceptors, mIndex + 1, connection,
-                request, mCall, mEventListener, mConnectTimeout, mReadTimeout,
-                mWriteTimeout);
+        RealInterceptorChain next = new RealInterceptorChain(mInterceptors, streamAllocation, httpCodec,
+                connection, mIndex + 1, request);
 
         Interceptor interceptor = mInterceptors.get(mIndex);
         Response response = interceptor.intercept(next);
@@ -73,22 +78,5 @@ public class RealInterceptorChain implements Interceptor.Chain {
                     "interceptor " + interceptor + " returned a response with no body");
         }
         return response;
-    }
-
-
-    public int connectTimeoutMillis() {
-        return mConnectTimeout;
-    }
-
-    public int readTimeoutMillis() {
-        return mReadTimeout;
-    }
-
-    int writeTimeoutMillis() {
-        return mWriteTimeout;
-    }
-
-    public HttpURLConnection connection() {
-        return mConnection;
     }
 }

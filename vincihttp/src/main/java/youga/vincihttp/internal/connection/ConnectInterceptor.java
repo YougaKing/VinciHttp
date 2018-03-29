@@ -1,12 +1,12 @@
 package youga.vincihttp.internal.connection;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.ProtocolException;
 
 import youga.vincihttp.Interceptor;
 import youga.vincihttp.Request;
 import youga.vincihttp.Response;
+import youga.vincihttp.VinciHttpClient;
+import youga.vincihttp.internal.http.HttpCodec;
 import youga.vincihttp.internal.http.RealInterceptorChain;
 
 /**
@@ -16,23 +16,24 @@ import youga.vincihttp.internal.http.RealInterceptorChain;
  */
 
 public class ConnectInterceptor implements Interceptor {
+    private final VinciHttpClient mHttpClient;
+
+    public ConnectInterceptor(VinciHttpClient httpClient) {
+        mHttpClient = httpClient;
+    }
+
     @Override
     public Response intercept(Chain chain) throws IOException {
 
         RealInterceptorChain realChain = (RealInterceptorChain) chain;
-
         Request request = realChain.request();
+        StreamAllocation streamAllocation = realChain.streamAllocation();
 
-        HttpURLConnection connection = (HttpURLConnection) request.url().url().openConnection();
+        // We need the network to satisfy this request. Possibly for validating a conditional GET.
+        boolean doExtensiveHealthChecks = !request.method().equals("GET");
+        HttpCodec httpCodec = streamAllocation.newStream(mHttpClient, doExtensiveHealthChecks);
+        RealConnection connection = streamAllocation.connection();
 
-        try {
-            connection.setRequestMethod(request.method());
-        } catch (ProtocolException e) {
-            e.printStackTrace();
-        }
-        connection.setConnectTimeout(realChain.connectTimeoutMillis());
-        connection.setReadTimeout(realChain.readTimeoutMillis());
-
-        return realChain.proceed(request, connection);
+        return realChain.proceed(request, streamAllocation, httpCodec, connection);
     }
 }

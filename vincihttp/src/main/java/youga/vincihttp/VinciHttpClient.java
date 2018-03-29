@@ -26,6 +26,7 @@ public class VinciHttpClient implements Call.Factory {
     private final int mConnectTimeout;
     private final int mReadTimeout;
     private final int mWriteTimeout;
+    private final ConnectionPool mConnectionPool;
 
     public VinciHttpClient() {
         this(new Builder());
@@ -39,6 +40,8 @@ public class VinciHttpClient implements Call.Factory {
         mConnectTimeout = builder.mConnectTimeout;
         mReadTimeout = builder.mReadTimeout;
         mWriteTimeout = builder.mWriteTimeout;
+
+        mConnectionPool = builder.mConnectionPool;
     }
 
     public Builder newBuilder() {
@@ -75,6 +78,10 @@ public class VinciHttpClient implements Call.Factory {
         return mWriteTimeout;
     }
 
+    public ConnectionPool connectionPool() {
+        return mConnectionPool;
+    }
+
     public static final class Builder {
         Dispatcher mDispatcher;
         List<Interceptor> mInterceptors = new ArrayList<>();
@@ -83,6 +90,7 @@ public class VinciHttpClient implements Call.Factory {
         int mConnectTimeout;
         int mReadTimeout;
         int mWriteTimeout;
+        ConnectionPool mConnectionPool;
 
         public Builder() {
             mDispatcher = new Dispatcher();
@@ -91,6 +99,7 @@ public class VinciHttpClient implements Call.Factory {
             mConnectTimeout = 10_000;
             mReadTimeout = 10_000;
             mWriteTimeout = 10_000;
+            mConnectionPool = new ConnectionPool();
         }
 
         Builder(VinciHttpClient httpClient) {
