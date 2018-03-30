@@ -3,7 +3,7 @@ apply plugin: 'newrelic'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion "26.0.2"
+    buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "youga.davinci"
         minSdkVersion 15
@@ -21,15 +21,14 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:26.+'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile 'com.squareup.okhttp3:okhttp:3.9.0'
-    compile 'com.newrelic.agent.android:android-agent:5.18.0'
-//    compile 'com.squareup.okhttp:okhttp:1.5.4'
-    testCompile 'junit:junit:4.12'
-    compile project(':vincihttp')
+    implementation 'com.android.support:appcompat-v7:26.+'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.squareup.okhttp3:okhttp:3.9.0'
+    implementation 'com.newrelic.agent.android:android-agent:5.18.0'
+    testImplementation 'junit:junit:4.12'
+    implementation project(':vincihttp')
 }

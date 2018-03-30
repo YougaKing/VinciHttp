@@ -2,6 +2,7 @@ package youga.davinci;
 
 import android.app.Application;
 
+import com.newrelic.agent.android.FeatureFlag;
 import com.newrelic.agent.android.NewRelic;
 
 /**
@@ -14,6 +15,15 @@ public class DavinciApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        NewRelic.withApplicationToken("GENERATED_TOKEN").start(this);
+
+        NewRelic.enableFeature(FeatureFlag.DistributedTracing);
+
+        NewRelic.withApplicationToken("GENERATED_TOKEN")
+                .usingSsl(true)
+                .withLoggingEnabled(true)
+                .withHttpResponseBodyCaptureEnabled(true)
+                .withInteractionTracing(true)
+                .start(this);
+
     }
 }
